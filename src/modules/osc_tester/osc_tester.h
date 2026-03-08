@@ -42,11 +42,11 @@ static const int    MAX_HISTORY       = 12;      // display rows in listen mode
 enum ArgType : uint8_t { ARG_INT = 0, ARG_FLOAT, ARG_STRING, ARG_BOOL };
 
 struct OscArg {
-    ArgType type;
-    int     ival;
-    float   fval;
+    ArgType type = ARG_INT;
+    int     ival = 0;
+    float   fval = 0.0f;
     String  sval;
-    bool    bval;
+    bool    bval = false;
 };
 
 struct Template {
@@ -96,7 +96,7 @@ static void loadTemplates() {
     File f = LittleFS.open(TEMPLATES_FILE, "r");
     if (!f) return;
 
-    StaticJsonDocument<4096> doc;
+    JsonDocument doc;
     if (deserializeJson(doc, f) != DeserializationError::Ok) { f.close(); return; }
     f.close();
 
@@ -124,15 +124,15 @@ static void saveTemplates() {
     ensureFS();
     if (!_fsReady) return;
 
-    StaticJsonDocument<4096> doc;
+    JsonDocument doc;
     JsonArray arr = doc.to<JsonArray>();
     for (auto& t : _templates) {
-        JsonObject obj = arr.createNestedObject();
+        JsonObject obj = arr.add<JsonObject>();
         obj["name"]    = t.name;
         obj["address"] = t.address;
-        JsonArray args = obj.createNestedArray("args");
+        JsonArray args = obj["args"].to<JsonArray>();
         for (auto& a : t.args) {
-            JsonObject ao = args.createNestedObject();
+            JsonObject ao = args.add<JsonObject>();
             switch (a.type) {
                 case ARG_INT:    ao["type"] = "i"; ao["val"] = a.ival; break;
                 case ARG_FLOAT:  ao["type"] = "f"; ao["val"] = a.fval; break;
@@ -567,7 +567,8 @@ static void eosShortcuts() {
                     M5.Display.print("Channel #:");
                     String ch = Keyboard::readLine(4, 38, 6);
                     if (!ch.isEmpty()) {
-                        std::vector<OscArg> args = {{ARG_INT, ch.toInt()}};
+                        OscArg a; a.type = ARG_INT; a.ival = ch.toInt();
+                        std::vector<OscArg> args = {a};
                         sendEos("/eos/chan/" + ch, args);
                         Display::status(("Chan " + ch + " selected").c_str(), Display::COLOR_OK);
                         delay(1000);
@@ -583,7 +584,8 @@ static void eosShortcuts() {
                     M5.Display.print("Level (0-100):");
                     String lvl = Keyboard::readLine(4, 70, 4);
                     if (!ch.isEmpty() && !lvl.isEmpty()) {
-                        std::vector<OscArg> args = {{ARG_INT, lvl.toInt()}};
+                        OscArg a; a.type = ARG_INT; a.ival = lvl.toInt();
+                        std::vector<OscArg> args = {a};
                         sendEos("/eos/chan/" + ch + "/at/" + lvl, args);
                         Display::status(("Ch" + ch + " @ " + lvl + "%").c_str(), Display::COLOR_OK);
                         delay(1000);

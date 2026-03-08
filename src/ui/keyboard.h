@@ -1,9 +1,9 @@
 #pragma once
-#include <M5Unified.h>
+#include <M5Cardputer.h>
 
 // ============================================================
 //  Keyboard — TCA8418 I2C abstraction for Cardputer ADV
-//  M5Unified wraps the TCA8418 — use M5.Keyboard or raw events.
+//  Uses M5Cardputer library for keyboard access.
 // ============================================================
 
 namespace Keyboard {
@@ -34,44 +34,41 @@ static const uint32_t HOLD_REPEAT_MS = 300;
 
 // Map M5Cardputer keyboard to abstract keys
 inline Event poll() {
-    M5.update();
+    M5Cardputer.update();
     Event ev = {NONE, 0, false};
 
-    // M5Unified Cardputer keyboard: M5.Keyboard provides character and special key access
-    if (!M5.Keyboard.isChange()) return ev;
+    // M5Cardputer.Keyboard provides keyboard state access
+    if (!M5Cardputer.Keyboard.isChange()) return ev;
 
-    auto kb = M5.Keyboard;
+    auto& state = M5Cardputer.Keyboard.keysState();
 
-    // Navigation keys mapped from Cardputer ADV function row
-    if (kb.isKeyPressed('/') || kb.isKeyPressed('\x1B')) {
+    // Navigation keys
+    if (state.del) {
         ev.key = BACK;
-    } else if (kb.isKeyPressed('\n') || kb.isKeyPressed('\r')) {
+    } else if (state.enter) {
         ev.key = ENTER;
-    } else if (kb.isKeyPressed('\t')) {
+    } else if (state.tab) {
         ev.key = TAB;
-    } else if (kb.isKeyPressed('i') && kb.isKeyPressed(0)) {
-        // Fn+i = up (customize to taste)
+    } else if (M5Cardputer.Keyboard.isKeyPressed('\x1B')) {
+        ev.key = BACK;
+    } else if (state.fn && M5Cardputer.Keyboard.isKeyPressed('i')) {
+        // Fn+i = up
         ev.key = UP;
-    } else if (kb.isKeyPressed('k') && kb.isKeyPressed(0)) {
+    } else if (state.fn && M5Cardputer.Keyboard.isKeyPressed('k')) {
+        // Fn+k = down
         ev.key = DOWN;
-    } else if (kb.isKeyPressed('j') && kb.isKeyPressed(0)) {
+    } else if (state.fn && M5Cardputer.Keyboard.isKeyPressed('j')) {
+        // Fn+j = left
         ev.key = LEFT;
-    } else if (kb.isKeyPressed('l') && kb.isKeyPressed(0)) {
+    } else if (state.fn && M5Cardputer.Keyboard.isKeyPressed('l')) {
+        // Fn+l = right
         ev.key = RIGHT;
-    } else {
-        // Raw character
-        auto state = kb.keysState();
-        for (int i = 0; i < 6; i++) {
-            if (state.hid_keys[i] != 0) {
-                char c = kb.getCharFromKeycode(state.hid_keys[i],
-                                               state.modifier.bits.left_shift ||
-                                               state.modifier.bits.right_shift);
-                if (c >= 32 && c < 127) {
-                    ev.key = CHAR;
-                    ev.ch  = c;
-                    break;
-                }
-            }
+    } else if (!state.word.empty()) {
+        // Printable character
+        char c = state.word[0];
+        if (c >= 32 && c < 127) {
+            ev.key = CHAR;
+            ev.ch  = c;
         }
     }
 

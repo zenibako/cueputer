@@ -2,7 +2,7 @@
 //  Cueputer — Theater tech multitool firmware
 //  Target: M5Stack Cardputer ADV (ESP32-S3)
 // ============================================================
-#include <M5Unified.h>
+#include <M5Cardputer.h>
 #include <WiFi.h>
 #include <vector>
 #include <algorithm>
@@ -87,7 +87,7 @@ void mainMenu() {
 // ============================================================
 void setup() {
     auto cfg = M5.config();
-    M5.begin(cfg);
+    M5Cardputer.begin(cfg);
 
     // Set display brightness from saved settings
     Settings::Config saved = Settings::load();
