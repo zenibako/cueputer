@@ -15,33 +15,32 @@ pio run -t upload && pio device monitor  # Flash + monitor
 
 ## Testing
 
-No test suite exists yet. When adding tests, follow this structure:
+Native (host-side) tests run pure logic without hardware. The `[env:native]`
+section in `platformio.ini` targets the host compiler with C++17.
 
 ```
 test/
-  native/           # Pure-logic tests that run on the host (CI-runnable)
-    test_parser/
-      test_main.cpp
-  embedded/          # Hardware-dependent tests (device only)
-    test_display/
-      test_main.cpp
+  native/                        # Pure-logic tests (CI-runnable)
+    test_osc_helpers/            # OSC string/format/history tests
+    test_wifi_helpers/           # RSSI-to-color mapping tests
+    test_menu_nav/               # Scroll state & scrollbar geometry
+  embedded/                      # Hardware-dependent tests (device only)
 ```
+
+Testable logic lives in `src/utils/` headers that compile on both Arduino and
+native targets (using `#ifdef ARDUINO` to switch String types).
 
 Tests use the [Unity](https://github.com/ThrowTheSwitch/Unity) framework (PlatformIO default).
-Add a `[env:native]` section to `platformio.ini` for host-runnable tests:
-
-```ini
-[env:native]
-platform = native
-test_filter = native/*
-```
 
 ```bash
-pio test -e native                          # Run all native tests
-pio test -e native -f "native/test_parser"  # Run a single test suite
-pio test --list-tests                       # List available tests
+pio test -e native                              # Run all native tests
+pio test -e native -f "native/test_osc_helpers" # Run a single test suite
+pio test --list-tests                           # List available tests
 pio test -e native --junit-output-path report.xml  # JUnit output for CI
 ```
+
+When adding new tests, create `test/native/test_<name>/test_main.cpp` and
+extract pure logic into `src/utils/<name>.h` if it doesn't already exist.
 
 ## Static Analysis (Linting)
 
