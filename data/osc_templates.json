@@ -1,0 +1,22 @@
+[
+  {
+    "name": "QLab Go",
+    "address": "/cue/selected/start",
+    "args": []
+  },
+  {
+    "name": "QLab Stop",
+    "address": "/cue/selected/stop",
+    "args": []
+  },
+  {
+    "name": "QLab Panic",
+    "address": "/panic",
+    "args": []
+  },
+  {
+    "name": "EOS Go",
+    "address": "/eos/key/go_0",
+    "args": []
+  }
+]
